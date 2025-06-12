@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Carrossel no Canvas com Música</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1950&q=80') no-repeat center center fixed;
+      background-size: cover;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+      color: white;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(8px);
+      z-index: -1;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    canvas {
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+      max-width: 90vw;
+      max-height: 60vh;
+      transition: opacity 1s ease-in-out;
+      opacity: 0;
+    }
+
+    .youtube-player {
+      margin: 20px auto;
+      display: block;
+      width: 90%;
+      max-width: 640px;
+      height: 60px;
+      border: none;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Dê o play para voltar no tempo.</h1>
+
+  <iframe id="ytplayer" class="youtube-player" 
+    src="https://www.youtube.com/embed/videoseries?list=PL_W6DC62GNi-S0m8WOSrOcSE3j51F02Q8&autoplay=0&controls=1&enablejsapi=1"
+    allow="autoplay; encrypted-media" allowfullscreen></iframe>
+
+  <canvas id="carousel" width="800" height="450"></canvas>
+
+  <script>
+    const canvas = document.getElementById('carousel');
+    const ctx = canvas.getContext('2d');
+
+    const imageUrls = [
+     "imagens/1 (2).jpg",
+      "imagens/1 (17).jpg",
+      "imagens/1 (3).jpg",
+      "imagens/1 (18).jpg",
+      "imagens/1 (4).jpg",
+      "imagens/1 (19).jpg",
+      "imagens/1 (5).jpg",
+      "imagens/1 (20).jpg",
+      "imagens/1 (6).jpg",
+      "imagens/1 (21).jpg",
+      "imagens/1 (7).jpg",
+      "imagens/1 (22).jpg",
+      "imagens/1 (8).jpg",
+      "imagens/1 (23).jpg",
+      "imagens/1 (9).jpg",
+      "imagens/1 (24).jpg",
+      "imagens/1 (10).jpg",
+      "imagens/1 (25).jpg",
+      "imagens/1 (11).jpg",
+      "imagens/1 (26).jpg",
+      "imagens/1 (12).jpg",
+      "imagens/1 (27).jpg",
+      "imagens/1 (13).jpg",
+      "imagens/1 (28).jpg",
+      "imagens/1 (14).jpg",
+      "imagens/1 (29).jpg",
+      "imagens/1 (15).jpg",
+      "imagens/1 (1).jpg",
+      "imagens/1 (16).jpg",
+    ];
+
+    const images = [];
+    let currentIndex = 0;
+    let loadedCount = 0;
+    let carouselInterval = null;
+
+    imageUrls.forEach((url, i) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        loadedCount++;
+        if (loadedCount === imageUrls.length) {
+          drawImage(images[currentIndex]);
+        }
+      };
+      img.onerror = () => {
+        console.error('Erro ao carregar a imagem:', url);
+      };
+      img.src = url;
+      images[i] = img;
+    });
+
+    function drawImage(img) {
+      canvas.style.opacity = 0;
+      setTimeout(() => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+        const x = (canvas.width / 2) - (img.width / 2) * scale;
+        const y = (canvas.height / 2) - (img.height / 2) * scale;
+        const w = img.width * scale;
+        const h = img.height * scale;
+        ctx.drawImage(img, x, y, w, h);
+        canvas.style.opacity = 1;
+      }, 500);
+    }
+
+    function startCarousel() {
+      if (carouselInterval) return;
+      drawImage(images[currentIndex]);
+      carouselInterval = setInterval(() => {
+        currentIndex = (currentIndex + 1) % images.length;
+        drawImage(images[currentIndex]);
+      }, 5000);
+    }
+
+    function pauseCarousel() {
+      clearInterval(carouselInterval);
+      carouselInterval = null;
+    }
+
+    // Integração com a YouTube IFrame Player API
+    let player;
+    function onYouTubeIframeAPIReady() {
+      player = new YT.Player('ytplayer', {
+        events: {
+          'onStateChange': onPlayerStateChange
+        }
+      });
+    }
+
+    function onPlayerStateChange(event) {
+      if (event.data === YT.PlayerState.PLAYING) {
+        startCarousel();
+      } else if (event.data === YT.PlayerState.ENDED || event.data === YT.PlayerState.PAUSED) {
+        pauseCarousel();
+      }
+    }
+
+    const tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.head.appendChild(tag);
+  </script>
+</body>
+</html>
